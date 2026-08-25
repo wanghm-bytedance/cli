@@ -80,6 +80,7 @@ func shortcutList() []common.Shortcut {
 		ChartList,
 		PivotList,
 		CondFormatList,
+		CondFormatResultGet,
 		FilterList,
 		FilterViewList,
 		SparklineList,

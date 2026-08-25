@@ -64,17 +64,94 @@ func TestReadDataShortcuts_DryRun(t *testing.T) {
 			},
 		},
 		{
-			// --rows-json is post-processing on +csv-get's response; it must
-			// NOT leak into the get_range_as_csv input.
-			name:     "+csv-get --rows-json builds the same input (flag is post-process)",
+			name:     "+csv-get basic input",
 			sc:       CsvGet,
-			args:     []string{"--url", testURL, "--sheet-id", testSheetID, "--range", "A1:C10", "--rows-json"},
+			args:     []string{"--url", testURL, "--sheet-id", testSheetID, "--range", "A1:C10"},
 			toolName: "get_range_as_csv",
 			wantInput: map[string]interface{}{
 				"excel_id": testToken,
 				"sheet_id": testSheetID,
 				"range":    "A1:C10",
 				"max_rows": float64(unboundedReadLimit),
+			},
+		},
+		{
+			name:     "+cond-format-result-get hardcodes include_conditional_format_style",
+			sc:       CondFormatResultGet,
+			args:     []string{"--url", testURL, "--sheet-id", testSheetID, "--range", "A1:B2"},
+			toolName: "get_cell_ranges",
+			wantInput: map[string]interface{}{
+				"excel_id":                         testToken,
+				"sheet_id":                         testSheetID,
+				"ranges":                           []interface{}{"A1:B2"},
+				"include_conditional_format_style": true,
+				"cell_limit":                       float64(unboundedReadLimit),
+			},
+		},
+		{
+			name:     "+cond-format-result-get with --include style",
+			sc:       CondFormatResultGet,
+			args:     []string{"--url", testURL, "--sheet-id", testSheetID, "--range", "A1:B2", "--include", "style"},
+			toolName: "get_cell_ranges",
+			wantInput: map[string]interface{}{
+				"excel_id":                         testToken,
+				"sheet_id":                         testSheetID,
+				"ranges":                           []interface{}{"A1:B2"},
+				"include_conditional_format_style": true,
+				"include_styles":                   true,
+				"cell_limit":                       float64(unboundedReadLimit),
+			},
+		},
+		{
+			name:     "+cells-get --conditional-format",
+			sc:       CellsGet,
+			args:     []string{"--url", testURL, "--sheet-id", testSheetID, "--range", "A1:B2", "--conditional-format"},
+			toolName: "get_cell_ranges",
+			wantInput: map[string]interface{}{
+				"excel_id":                         testToken,
+				"sheet_id":                         testSheetID,
+				"ranges":                           []interface{}{"A1:B2"},
+				"include_conditional_format_style": true,
+				"cell_limit":                       float64(unboundedReadLimit),
+			},
+		},
+		{
+			name:     "+cells-get --skip-filter",
+			sc:       CellsGet,
+			args:     []string{"--url", testURL, "--sheet-id", testSheetID, "--range", "A1:B2", "--skip-filter"},
+			toolName: "get_cell_ranges",
+			wantInput: map[string]interface{}{
+				"excel_id":    testToken,
+				"sheet_id":    testSheetID,
+				"ranges":      []interface{}{"A1:B2"},
+				"skip_filter": true,
+				"cell_limit":  float64(unboundedReadLimit),
+			},
+		},
+		{
+			name:     "+cond-format-result-get --skip-filter=false",
+			sc:       CondFormatResultGet,
+			args:     []string{"--url", testURL, "--sheet-id", testSheetID, "--range", "A1:B2", "--skip-filter=false"},
+			toolName: "get_cell_ranges",
+			wantInput: map[string]interface{}{
+				"excel_id":                         testToken,
+				"sheet_id":                         testSheetID,
+				"ranges":                           []interface{}{"A1:B2"},
+				"include_conditional_format_style": true,
+				"skip_filter":                      false,
+				"cell_limit":                       float64(unboundedReadLimit),
+			},
+		},
+		{
+			name:     "+cells-get without --skip-filter (key absent for backward compat)",
+			sc:       CellsGet,
+			args:     []string{"--url", testURL, "--sheet-id", testSheetID, "--range", "A1:B2"},
+			toolName: "get_cell_ranges",
+			wantInput: map[string]interface{}{
+				"excel_id":   testToken,
+				"sheet_id":   testSheetID,
+				"ranges":     []interface{}{"A1:B2"},
+				"cell_limit": float64(unboundedReadLimit),
 			},
 		},
 	}
@@ -120,6 +197,7 @@ func TestReadData_RequiresRange(t *testing.T) {
 		{"+cells-get", CellsGet},
 		{"+csv-get", CsvGet},
 		{"+dropdown-get", DropdownGet},
+		{"+cond-format-result-get", CondFormatResultGet},
 	}
 	for _, c := range cases {
 		c := c
