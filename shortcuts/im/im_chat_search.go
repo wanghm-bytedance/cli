@@ -192,6 +192,9 @@ var ImChatSearch = common.Shortcut{
 		}
 		items = mfOut.Chats
 		pagination.Items = len(items)
+		if !searchMayIncludeNonMemberChats(runtime.Str("search-types")) {
+			addChatAppLinks(items, runtime)
+		}
 
 		outData := map[string]interface{}{
 			"chats":      items,
@@ -356,4 +359,17 @@ func detectAllNonMemberPreSkip(searchTypesCSV string) string {
 		return SkipReasonAllNonMember
 	}
 	return ""
+}
+
+// searchMayIncludeNonMemberChats reports whether the search result may contain
+// public groups the caller has not joined. Feishu AppLinks only promise opening
+// chats the user has already joined, so those mixed results must not receive a
+// best-effort conversation link.
+func searchMayIncludeNonMemberChats(searchTypesCSV string) bool {
+	for _, typ := range common.SplitCSV(searchTypesCSV) {
+		if typ == "public_not_joined" {
+			return true
+		}
+	}
+	return false
 }
